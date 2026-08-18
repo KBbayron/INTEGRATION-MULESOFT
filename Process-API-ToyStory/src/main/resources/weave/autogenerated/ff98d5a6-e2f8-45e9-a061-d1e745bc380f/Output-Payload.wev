@@ -1,0 +1,19 @@
+%dw 2.0
+
+type auto_ff98d5a6_e2f8_45e9_a061_d1e745bc380f_Output_Payload = {
+  customerCode: Number, 
+  customerInfo: {
+    firstName: String, 
+    lastName: String, 
+    address: {
+      city: String, 
+      street: String, 
+      state: String, 
+      _?: Any
+    }, 
+    gender: String, 
+    _?: Any
+  }, 
+  _?: Any
+}
+

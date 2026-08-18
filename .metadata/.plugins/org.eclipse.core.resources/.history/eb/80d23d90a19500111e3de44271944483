@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="get-orders-test-suite.xml" />
+	<munit:test name="get-orders-test-suite-get-orders-flowTest" doc:id="12adf015-7550-47dc-9cf4-5ca84d556dc5" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="36842a4e-91ea-4364-9938-fd9437083b20" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="get-order-db" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="response" value='#[{&#10;	"affectedRows": 1,&#10;	"generatedKeys": []&#10;}]' mediaType="application/java" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="59b0c402-4989-425e-b330-31a31c3a5b22" >
+				<munit:attributes value='#[%dw 2.0&#10;output application/java&#10;---&#10;{&#10;    uriParams: {&#10;        "id": "2"&#10;    },&#10;    method: "GET",&#10;    requestPath: "/api/v1/customers/2"&#10;}]' />
+				<munit:variables >
+					<munit:variable key="correlationId" value='"67bdbd80-8cea-11f1-a317-86e22729da3c"' mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to get-orders-flow" doc:id="7b106196-3798-4ca7-954a-1486ca7fe121" name="get-orders-flow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="d9fe2720-21af-4fa3-bc48-c53def2f9ca8" is="#[MunitTools::equalTo(&#10;    readUrl('classpath://orders/order-response.json', 'application/json') update {&#10;        case .timestamp -&gt; payload.order_date&#10;    }&#10;)]" expression="#[payload]"/>
+		</munit:validation>
+	</munit:test>
+
+</mule>

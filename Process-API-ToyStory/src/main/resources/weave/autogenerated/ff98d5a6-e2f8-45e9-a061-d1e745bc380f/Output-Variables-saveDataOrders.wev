@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_ff98d5a6_e2f8_45e9_a061_d1e745bc380f_Output_Variables_saveDataOrders = Any
+

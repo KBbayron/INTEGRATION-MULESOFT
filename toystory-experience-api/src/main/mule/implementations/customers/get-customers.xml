@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="get-customer" doc:id="5904c853-f1be-467c-8dad-f7481272c573" >
+		<logger level="INFO" doc:name="initial-get-oder-logger" doc:id="4b19b012-7a6e-488f-9346-886bab49701a" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: vars.env,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,     &#10;    httpMethod: attributes.method,&#10;    uriParam: if (!isEmpty(attributes.uriPraman)) attributes.uriPraman else Null,                              &#10;    message: &quot;Initiating customer &quot; ++ attributes.method ++ &quot; request to EAPI&quot;&#10;}]" />
+		<http:request method="GET" doc:name="request-get-customer-papi" doc:id="46c3dc4d-3c3d-44c8-ac7d-74f715cc17c4" config-ref="HTTP_Request_api-process" path="#[p('api-process.path.customers') ++ (if (!isEmpty(attributes.uriParams.customerId)) &quot;/&quot; ++ (attributes.uriParams.customerId as String) else &quot;&quot;)]" responseTimeout="60000" >
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"X-Correlation-ID" : correlationId
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"" : "Value"
+}]]]></http:uri-params>
+			<http:response-validator >
+				<http:success-status-code-validator values="200..499" />
+			</http:response-validator>
+		</http:request>
+		<logger level="INFO" doc:name="final-get-logger" doc:id="4bf3f235-c638-45c8-996a-c66100e9692d" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: vars.env,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: attributes.method,   &#10;    details:{&#10;	    message: &quot;Customer successfully get into EAPI.&quot;  	&#10;    }                          &#10;}]" />
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f32efc9e-6d86-4e8c-85ed-4f2d88f7f971" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR&#10;" >
+				<logger level="INFO" doc:name="error-logger-data" doc:id="61e4fead-825c-40c3-b664-33b812b7ecd9" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  "log_type": "EXPERIENCE_API_ERROR",&#10;  "API_NAME": app.name,&#10;  "correlation_id": correlationId,&#10;  "flow_name": flow.name,&#10;  httpMethod: attributes.method,&#10;  "timestamp": now(),&#10;  "details": {&#10;    "target_id": attributes.uriParams.id default "UNKNOWN",&#10;    "error_type": (error.errorType.namespace default "DB") ++ ":" ++ (error.errorType.identifier default "UNKNOWN"),&#10;    "error_description": error.description default "No description available",&#10;    "message": "Failed to "++ attributes.method ++ " customer from EAPI."&#10;  }&#10;}]' />
+				<ee:transform doc:name="error-response" doc:id="acb4531c-5b30-4dde-9bc2-df18ec3d4ca4" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "success": false,
+  "correlationId": correlationId,
+  "error": {
+    "code": if (error.errorType.identifier == "CONNECTIVITY") "SERVICE_UNAVAILABLE" else "INTERNAL_SERVER_ERROR",
+    "message": "Error processing the request on the target experience.",
+    "description": error.description default "No technical details available",
+    "timestamp": now() as String {format: "yyyy-MM-dd'T'HH:MM:ss'Z'"}
+  }
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

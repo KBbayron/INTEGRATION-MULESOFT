@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Archiver-Version: Plexus Archiver
+Created-By: Apache Maven 3.9.16
+Built-By: root
+Build-Jdk: 17.0.18
+Specification-Title: Mule Secure Configuration Property Extension
+Specification-Version: 1.3.1
+Specification-Vendor: MuleSoft, Inc.
+Implementation-Title: Mule Secure Configuration Property Extension
+Implementation-Version: 1.3.1
+Implementation-Vendor-Id: com.mulesoft.modules
+Implementation-Vendor: MuleSoft, Inc.
+Implementation-URL: https://github.com/mulesoft/mule-extensions-parent/m
+ ule4-connectors-parent/mule-secure-configuration-property-module
+Build-Date: 2026-07-22-17:48:44
+Target-Java-Release-Version: 8
+

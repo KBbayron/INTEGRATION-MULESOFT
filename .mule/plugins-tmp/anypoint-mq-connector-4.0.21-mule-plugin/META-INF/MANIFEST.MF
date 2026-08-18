@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Archiver-Version: Plexus Archiver
+Created-By: Apache Maven 3.9.16
+Built-By: root
+Build-Jdk: 17.0.18
+Specification-Title: Anypoint MQ Connector
+Specification-Version: 4.0.21
+Specification-Vendor: MuleSoft, Inc.
+Implementation-Title: Anypoint MQ Connector
+Implementation-Version: 4.0.21
+Implementation-Vendor-Id: com.mulesoft.connectors
+Implementation-Vendor: MuleSoft, Inc.
+Implementation-URL: https://github.com/mulesoft/mule-extensions-parent/a
+ nypoint-mq-connector
+Build-Date: 2026-07-20-19:08:15
+

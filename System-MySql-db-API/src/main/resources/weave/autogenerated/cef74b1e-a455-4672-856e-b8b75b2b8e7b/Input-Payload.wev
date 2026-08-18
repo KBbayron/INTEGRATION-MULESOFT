@@ -1,0 +1,12 @@
+%dw 2.0
+
+type auto_cef74b1e_a455_4672_856e_b8b75b2b8e7b_Input_Payload = {
+  firstName: String, 
+  lastName: String, 
+  address: String, 
+  gender: String, 
+  city: String, 
+  state: String, 
+  _?: Any
+}
+

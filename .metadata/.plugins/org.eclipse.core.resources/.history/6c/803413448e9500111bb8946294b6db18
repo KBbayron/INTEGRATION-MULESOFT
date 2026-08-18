@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="dynamic-get-customers" doc:id="ff98d5a6-e2f8-45e9-a061-d1e745bc380f" >
+		<logger level="INFO" doc:name="Logger" doc:id="397d61a5-360b-41f3-88fc-a9f1ff2428e4" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy HH:mm:ss&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: Mule::p('mule.env') default &quot;local&quot;,&#10;    apiName: app.name,&#10;    flow: flow.name, &#10;    correlationId: vars.correlationId,    &#10;    httpMethod: vars.dataMethods.method,&#10;    uriParam: if (!isEmpty(vars.dataMethods.userId)) vars.dataMethods.userId else null,                             &#10;    message: &quot;Initiating customer get request to PAPI&quot;&#10;}]" />
+		<http:request method="GET" doc:name="get-customer" doc:id="69caac21-8214-4be9-9bad-8ba48a157f98" config-ref="HTTP_Request_apy-sys" path="#[p('api-sys.path.customers') ++ (if (!isEmpty(attributes.uriParams.customerId)) &quot;/&quot; ++ attributes.uriParams.customerId else &quot;&quot;)]" responseTimeout="300000" >
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"X-Correlation-ID" : vars.correlationId,
+}]]]></http:headers>
+			<http:response-validator >
+				<http:success-status-code-validator values="200..499" />
+			</http:response-validator>
+		</http:request>
+		<choice doc:name="Choice" doc:id="260f735d-ec1d-4a86-acbc-6be8e85f4ec8" >
+			<when expression='#[payload.status == "Fail"]' >
+				<ee:transform doc:name="set final error message" doc:id="06bf555d-a19f-4552-ae41-ae1f4cd853f3" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  Message: "There isn't customer to show",
+  status: "Fail"
+}
+]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+404
+]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="10b15c77-8989-456e-8f04-f6c209ff35c9" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: Mule::p('mule.env') default &quot;local&quot;,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: vars.dataMethods.method, &#10;    details:{&#10;	    message: payload  	&#10;    }                          &#10;}]" />
+			</when>
+			<when expression="#[payload is Object]" >
+				<set-variable value="#[payload]" doc:name="user" doc:id="5e1dcddd-450e-4f58-9ac4-4c7c2ec0231c" variableName="user"/>
+				<http:request method="GET" doc:name="request-dynamic-get-order-sapi" doc:id="7ebbd97c-006e-420c-b50c-7cbc3fffaaba" config-ref="HTTP_Request_apy-sys" path="${api-sys.path.orders}" responseTimeout="30000000">
+					<http:headers><![CDATA[#[output application/java
+---
+{
+	"X-Correlation-ID" : vars.correlationId
+}]]]></http:headers>
+					<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"userId" : payload.user_id
+}]]]></http:query-params>
+					<http:response-validator>
+						<http:success-status-code-validator values="200..499" />
+					</http:response-validator>
+				</http:request>
+				<ee:transform doc:name="set final message with orders" doc:id="a12fd4ce-f5a8-4e75-9279-4808ac3edd9a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "customer": vars.user,
+    "orders": if (payload.status == "Fail") [] else payload filter ((item) -> item.user_id == vars.user.user_id)
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="d2247270-56f5-4043-b4f5-113b122d335d" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: Mule::p('mule.env') default &quot;local&quot;,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: vars.dataMethods.method,&#10;    uriParam: if (!isEmpty(vars.dataMethods.userId)) vars.dataMethods.userId else null,  &#10;    details:{&#10;	    message: &quot;Customer successfully get into PAPI.&quot;,&#10;	    &quot;affected_rows&quot;: payload.affectedRows default 1    	&#10;    }                          &#10;}]" />
+			</when>
+			<otherwise >
+				<ee:transform doc:name="set final message" doc:id="8da8532a-008e-4d6a-bd20-f7c8d2320225" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload match {
+  case is Array -> {
+    "message": "Customers and orders successfully created in Database.",
+    "count": sizeOf(payload),
+    "customers": payload map (item, index) -> {
+      "customerCode": item.user_id,
+      "customerInfo": {
+        "firstName": item.first_name,
+        "lastName": item.last_name,
+        "gender": item.gender,
+        "address": {
+          "street": item.street default item.address,
+          "city": item.city,
+          "state": item.state
+        }
+      }
+    }
+  }
+
+  case is Object -> {
+    "message": "Customer and orders successfully created in Database.",
+    "customerCode": payload.user_id,
+    "customerInfo": {
+      "firstName": payload.first_name,
+      "lastName": payload.last_name,
+      "gender": payload.gender,
+      "address": {
+        "street": payload.street default payload.address,
+        "city": payload.city,
+        "state": payload.state
+      }
+    }
+  }
+  else -> {
+    "message": "No data processed or empty payload received.",
+    "status": "Warning"
+  }
+}
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="4e9ba6ea-8263-4cd3-b545-35b6468aa903" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: Mule::p('mule.env') default &quot;local&quot;,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: vars.dataMethods.method,&#10;    uriParam: if (!isEmpty(vars.dataMethods.userId)) vars.dataMethods.userId else &quot;Get all request&quot;,   &#10;    details:{&#10;	    message: &quot;Customer successfully get into papi.&quot;,&#10;	    &quot;affected_rows&quot;: payload.affectedRows default 1    	&#10;    }                          &#10;}]" />
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="f39f9a7d-1db4-44a6-a31d-34a263c583dc" >
+				<logger level="INFO" doc:name="Logger of issues" doc:id="fc92be01-41c5-4432-917a-9af5f359b4e4" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  "log_type": "SYSTEM_API_ERROR",&#10;  "API_NAME": app.name,&#10;  "correlation_id": vars.correlationId,&#10;  "flow_name": flow.name,&#10;  httpMethod: attributes.method,&#10;  "timestamp": now(),&#10;  "details": {&#10;    "target_id": attributes.uriParams.id default "UNKNOWN",&#10;    "error_type": (error.errorType.namespace default "DB") ++ ":" ++ (error.errorType.identifier default "UNKNOWN"),&#10;    "error_description": error.description default "No description available",&#10;    "message": "Failed to "++ attributes.method ++ " customer from PAPI."&#10;  }&#10;}]' />
+				<ee:transform doc:name="set a error message" doc:id="f323b042-e3f2-401c-9a5d-e969f9ad7566" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "success": false,
+  "correlationId": vars.correlationId,
+  "error": {
+    "code": if (error.errorType.identifier == "CONNECTIVITY") "SERVICE_UNAVAILABLE" else "INTERNAL_SERVER_ERROR",
+    "message": "Error processing the request on the target process.",
+    "description": error.description default "No technical details available",
+    "timestamp": now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"}
+  }
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+500]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

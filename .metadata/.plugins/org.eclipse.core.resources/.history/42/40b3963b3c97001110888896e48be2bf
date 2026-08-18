@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="get-customers-flow" doc:id="5dd02bc4-78ad-4f05-8b19-513ac76768d1" >
+		<logger level="INFO" doc:name="Log-initial-get-customer" doc:id="81eb265b-1997-46ad-9455-0acb78ded80f" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: ${env},&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: attributes.method,  &#10;    uriParam: if (!isEmpty(attributes.uriParams)) attributes.uriParams[0] else null,                             &#10;    message: &quot;Initiating customer &quot; ++ attributes.method ++ &quot; request to database&quot;&#10;}]" />
+		<db:select doc:name="get-customer-db" doc:id="9828df11-b93d-4d49-b572-38b602e71c85" config-ref="Database_Config-mysql" queryTimeout="4500" >
+			<db:sql ><![CDATA[SELECT * 
+FROM users 
+WHERE (:id IS NULL OR user_id = :id)
+
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+  id: (attributes.uriParams.'customerId' default attributes.uriParams.'id') default null
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Set-get-customer-response" doc:id="5765ecf5-6866-4e13-aa16-15f1db53c9e5">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if (isEmpty(payload)){ 
+  "message": "Register not founded",
+  "status": "Fail"
+}
+else if (sizeOf(payload) == 1)
+  payload[0]
+else 
+  payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus"><![CDATA[%dw 2.0
+output application/java
+---
+200]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log-final-get-customer" doc:id="b0695d04-2996-4fa4-a6b5-194865819a41" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: Mule::p('mule.env') default &quot;local&quot;,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: vars.saveMethod,  &#10;    details:{&#10;	    message: &quot;Customer successfully get into database.&quot;,&#10;	    affected_rows: payload.affectedRows default 1&#10;    }                          &#10;}]" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="2a90dc19-18b7-4afb-aab3-630a97965fac" type="DB:CONNECTIVITY, DB:QUERY_EXECUTION, EXPRESSION&#10;" >
+				<logger level="INFO" doc:name="Log-error-get-customer" doc:id="9a561c8f-4908-4231-b411-8b807507fe75" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  "log_type": "SYSTEM_API_ERROR",&#10;  "API_NAME": app.name,&#10;  "correlation_id": vars.correlationId,&#10;  "flow_name": flow.name,&#10;  httpMethod: attributes.method,&#10;  "timestamp": now(),&#10;  "details": {&#10;    "target_id": attributes.uriParams.id default "UNKNOWN",&#10;    "error_type": (error.errorType.namespace default "DB") ++ ":" ++ (error.errorType.identifier default "UNKNOWN"),&#10;    "error_description": error.description default "No description available",&#10;    "message": "Failed to "++ attributes.method ++ " customer from database due to connection or execution error."&#10;  }&#10;}]' />
+				<ee:transform doc:name="set error message" doc:id="b35c27ad-9da1-4afa-a112-a38c19608cff" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "success": false,
+  "correlationId": vars.correlationId,
+  "error": {
+    "code": if (error.errorType.identifier == "CONNECTIVITY") "SERVICE_UNAVAILABLE" else "INTERNAL_SERVER_ERROR",
+    "message": "Error processing the request on the target system.",
+    "description": error.description default "No technical details available",
+    "timestamp": now() as String {format: "yyyy-MM-dd'T'HH:MM:ss'Z'"}
+  }
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+400]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

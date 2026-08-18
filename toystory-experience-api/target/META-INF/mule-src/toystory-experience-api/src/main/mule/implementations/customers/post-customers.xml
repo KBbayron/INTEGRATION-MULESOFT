@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="post-customer" doc:id="3ea10dd1-8f61-4444-908e-92667b62a99e" >
+		<logger level="INFO" doc:name="initial-POST-oder-logger" doc:id="6acff708-4267-4079-bbc6-dfcc25b8f64c" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: vars.env,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,     &#10;    httpMethod: attributes.method,                             &#10;    message: &quot;Initiating customer &quot; ++ attributes.method ++ &quot; request to EAPI&quot;,&#10;    payload_to_post: payload&#10;}]" />
+		<http:request method="POST" doc:name="post customer" doc:id="722776e2-5a0c-4b4d-b916-82b4db8c26a8" config-ref="HTTP_Request_api-process" path="${api-process.path.customers}" responseTimeout="60000" >
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"X-Correlation-ID" : correlationId
+}]]]></http:headers>
+		</http:request>
+		<logger level="INFO" doc:name="final-post-logger" doc:id="297f275e-8755-4ab9-b51c-3eaff4036f0e" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: vars.env,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: attributes.method,   &#10;    details:{&#10;	    message: &quot;Customer successfully post into EAPI.&quot;  	&#10;    }                          &#10;}]" />
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="17ae12b0-2392-4e79-af5d-8f0434a176bf" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR&#10;" >
+				<logger level="INFO" doc:name="error-logger-data" doc:id="4d459b91-47ed-4e22-9418-bed678bb6b4f" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  "log_type": "EXPERIENCE_API_ERROR",&#10;  "API_NAME": app.name,&#10;  "correlation_id": correlationId,&#10;  "flow_name": flow.name,&#10;  httpMethod: attributes.method,&#10;  "timestamp": now(),&#10;  "details": {&#10;    "target_id": attributes.uriParams.id default "UNKNOWN",&#10;    "error_type": (error.errorType.namespace default "DB") ++ ":" ++ (error.errorType.identifier default "UNKNOWN"),&#10;    "error_description": error.description default "No description available",&#10;    "message": "Failed to "++ attributes.method ++ " customer from EAPI."&#10;  }&#10;}]' />
+				<ee:transform doc:name="error-response" doc:id="7205a83c-f487-49c1-96e4-31fb81b78657" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "success": false,
+  "correlationId": correlationId,
+  "error": {
+    "code": if (error.errorType.identifier == "CONNECTIVITY") "SERVICE_UNAVAILABLE" else "INTERNAL_SERVER_ERROR",
+    "message": "Error processing the request on the target experience.",
+    "description": error.description default "No technical details available",
+    "timestamp": now() as String {format: "yyyy-MM-dd'T'HH:MM:ss'Z'"}
+  }
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

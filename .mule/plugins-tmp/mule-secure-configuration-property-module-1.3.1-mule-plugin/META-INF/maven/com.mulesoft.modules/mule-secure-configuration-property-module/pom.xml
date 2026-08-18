@@ -1,0 +1,135 @@
+<?org.mule.security.encryption.xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.mulesoft.connectors</groupId>
+        <artifactId>mule4-connectors-parent</artifactId>
+        <version>2.0.7</version>
+    </parent>
+
+    <groupId>com.mulesoft.modules</groupId>
+    <artifactId>mule-secure-configuration-property-module</artifactId>
+    <packaging>mule-extension</packaging>
+    <version>1.3.1</version>
+
+    <name>Mule Secure Configuration Property Extension</name>
+    <description>Mule extension for loading encrypted properties</description>
+
+    <properties>
+        <muleTestsComponentPlugin>${mule.version}</muleTestsComponentPlugin>
+        <minMuleVersion>${mule.version}</minMuleVersion>
+        <muleEncryptionVersion>1.3.2</muleEncryptionVersion>
+
+        <licenseYear>2023</licenseYear>
+
+        <commons.io.version>2.22.0</commons.io.version>
+        <allureJunitVersion>2.35.3</allureJunitVersion>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.mule</groupId>
+            <artifactId>mule-encryption</artifactId>
+            <version>${muleEncryptionVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons.io.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-junit4</artifactId>
+            <version>${allureJunitVersion}</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                <artifactId>replacer</artifactId>
+                <version>1.5.3</version>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <file>${project.build.directory}/classes/META-INF/mule-artifact/mule-artifact.json</file>
+                    <replacements>
+                        <replacement>
+                            <token>%MIN_MULE_VERSION%</token>
+                            <value>${minMuleVersion}</value>
+                        </replacement>
+                    </replacements>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.mulesoft.munit</groupId>
+                <artifactId>munit-extensions-maven-plugin</artifactId>
+                <configuration>
+                    <munitTest>${munit.path}</munitTest>
+                    <runtimeConfiguration>
+                        <discoverRuntimes>
+                            <minMuleVersion>${minVersion}</minMuleVersion>
+                            <includeSnapshots>false</includeSnapshots>
+                            <product>CE</product>
+                        </discoverRuntimes>
+                        <discoverRuntimes>
+                            <minMuleVersion>${minVersion}</minMuleVersion>
+                            <includeSnapshots>false</includeSnapshots>
+                            <product>EE</product>
+                        </discoverRuntimes>
+                    </runtimeConfiguration>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>connector-analyze</id>
+                        <configuration>
+                            <ignoredUnusedDeclaredDependencies>
+                                <!-- Allure JUnit4 listener, registered via JUnit RunListener SPI -->
+                                <ignoredUnusedDeclaredDependency>io.qameta.allure:allure-junit4</ignoredUnusedDeclaredDependency>
+                            </ignoredUnusedDeclaredDependencies>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>default-config</id>
+            <activation>
+                <property>
+                    <name>!mule.security.model</name>
+                </property>
+            </activation>
+            <properties>
+                <munit.path>.*.xml</munit.path>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>fips-config</id>
+            <activation>
+                <property>
+                    <name>mule.security.model</name>
+                </property>
+            </activation>
+            <properties>
+                <munit.path>fips-compliace-munits/.*.xml</munit.path>
+            </properties>
+        </profile>
+    </profiles>
+</project>

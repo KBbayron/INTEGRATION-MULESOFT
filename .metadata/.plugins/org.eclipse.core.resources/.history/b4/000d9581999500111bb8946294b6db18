@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="get-orders-test-suite.xml" />
+	<munit:test name="get-orders-test-suite-get-orders-flowTest" doc:id="12adf015-7550-47dc-9cf4-5ca84d556dc5" description="Test">
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get-orders-flow" doc:id="7b106196-3798-4ca7-954a-1486ca7fe121" name="get-orders-flow"/>
+		</munit:execution>
+	</munit:test>
+
+</mule>

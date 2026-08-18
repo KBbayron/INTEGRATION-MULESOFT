@@ -1,0 +1,12 @@
+{
+  "message": "Customer updated successfully",
+  "status": "success",
+  "data": {
+    "first_name": "Maria Elena*",
+    "last_name": "Chaves Quiros*",
+    "gender": "Female",
+    "street": "Barrio Escalante, de la iglesia 200 metros norte.",
+    "city": "San Jose",
+    "state": "San Jose"
+  }
+}

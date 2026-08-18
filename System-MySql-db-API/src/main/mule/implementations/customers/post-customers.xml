@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="post-customers-flow" doc:id="020e4f47-afa0-48a0-bbee-817fe45902be" >
+		<logger level="INFO" doc:name="Log-initial-post-customer" doc:id="411faf3c-85b3-4125-92ea-a984ce834001" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: vars.env,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: attributes.method,  &#10;    uriParam: if (!isEmpty(attributes.uriParams)) attributes.uriParams[0] else null,                          &#10;    message: &quot;Initiating customer &quot; ++ attributes.method ++ &quot; request to database&quot;,&#10;}]" />
+		<db:insert doc:name="post-customer-db" doc:id="cbecb296-3f98-4971-9fa2-7cc5b55d7d6f" config-ref="Database_Config-mysql" autoGenerateKeys="true" target="customerAdded" >
+			<db:sql ><![CDATA[INSERT INTO users (
+    first_name, 
+    last_name, 
+    gender, 
+    street, 
+    city, 
+    state, 
+    creation_date, 
+    modification_date
+) VALUES (
+    :firstName, 
+    :lastName, 
+    :gender, 
+    :street, 
+    :city, 
+    :state, 
+    CURRENT_DATE, 
+    CURRENT_DATE
+)
+
+
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    gender: payload.gender,
+    street: payload.address,
+    city: payload.city,
+    state: payload.state
+}]]]></db:input-parameters>
+			<db:auto-generated-keys-column-names >
+				<db:auto-generated-keys-column-name value="user_id" />
+			</db:auto-generated-keys-column-names>
+		</db:insert>
+		<ee:transform doc:name="Set-post-customer-response" doc:id="381f2261-d654-4fe5-b7a0-8340b1f4096f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "message": "Customer created successfully",
+  "status": "success",
+  "timestamp": now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"},
+  "data": {
+    "customer_id": vars.customerAdded.generatedKeys[0],
+    "first_name": payload.firstName,
+    "last_name": payload.lastName,
+    "gender": payload.gender,
+    "street": payload.address ,
+    "city": payload.city ,
+    "state": payload.state 
+  }
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus"><![CDATA[%dw 2.0
+output application/java
+---
+200]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log-final-post-customer" doc:id="42890453-bc6c-46cd-afbc-ce8b71e03b32" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: Mule::p('mule.env') default &quot;local&quot;,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: vars.saveMethod,  &#10;    details:{&#10;	    message: &quot;Customer successfully post into database.&quot;,&#10;	    affected_rows: payload.affectedRows default 1,&#10;	    data_added:payload.data&#10;    }                          &#10;}]" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f31cb2fa-deb8-417b-8289-6c9dd96f3662" type="DB:CONNECTIVITY, DB:QUERY_EXECUTION, EXPRESSION&#10;" >
+				<logger level="INFO" doc:name="Log-error-post-customer" doc:id="edb8f1d8-7c53-473b-8fb5-1e0a21daf831" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  "log_type": "SYSTEM_API_ERROR",&#10;  "API_NAME": app.name,&#10;  "correlation_id": vars.correlationId,&#10;  "flow_name": flow.name,&#10;  httpMethod: attributes.method,&#10;  "timestamp": now(),&#10;  "details": {&#10;    "target_id": attributes.uriParams.id default "UNKNOWN",&#10;    "error_type": (error.errorType.namespace default "DB") ++ ":" ++ (error.errorType.identifier default "UNKNOWN"),&#10;    "error_description": error.description default "No description available",&#10;    "message": "Failed to "++ attributes.method ++ " customer from database due to connection or execution error."&#10;  }&#10;}]' />
+				<ee:transform doc:name="set error message" doc:id="c7d8a215-c840-4a1c-944e-cc3819f95d50" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "success": false,
+  "correlationId": vars.correlationId,
+  "error": {
+    "code": if (error.errorType.identifier == "CONNECTIVITY") "SERVICE_UNAVAILABLE" else "INTERNAL_SERVER_ERROR",
+    "message": "Error processing the request on the target system.",
+    "description": error.description default "No technical details available",
+    "timestamp": now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"},
+    "targetSystem": "DATABASE_CUSTOMERS"
+  }
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+500]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

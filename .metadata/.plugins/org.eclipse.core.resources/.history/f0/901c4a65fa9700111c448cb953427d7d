@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_broker
+    ports:
+      # 5672: El puerto principal para las conexiones de la aplicación (AMQP)
+      - "5672:5672"
+      # 15672: EL PUERTO WEB DEL PANEL DE CONTROL. ¡Esto es muy útil!
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user_practica # Creas un usuario predeterminado
+      RABBITMQ_DEFAULT_PASS: password_secreto # y una contraseña para este entorno

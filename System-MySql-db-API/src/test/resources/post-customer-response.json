@@ -1,0 +1,14 @@
+{
+  "message": "Customer created successfully",
+  "status": "success",
+  "timestamp": "2026-08-07T19:14:50Z",
+  "data": {
+    "customer_id": 1,
+    "first_name": "OrlandoPrueba",
+    "last_name": "LeivaPrueba",
+    "gender": "Male",
+    "street": "Calle Ficticia 15c",
+    "city": "Heredia",
+    "state": "Las flores y petalos"
+  }
+}

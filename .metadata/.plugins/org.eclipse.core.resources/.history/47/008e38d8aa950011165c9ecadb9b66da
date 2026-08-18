@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="post-orders-flow" doc:id="a6303896-5274-4ddb-b1d0-5fc63cb6fbff" >
+		<logger level="INFO" doc:name="Log-initial-post-order" doc:id="c1550ce8-422c-4252-85fc-6e0190fa9750" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    fecha: now() as String {format: &quot;dd-MM-yyyy HH:mm:ss a&quot;},&#10;    level: p('system.log.level') default &quot;INFO&quot;,&#10;    environment: p('mule.env') default &quot;local&quot;,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: attributes.method,   &#10;    uriParam: if (!isEmpty(attributes.uriParams)) attributes.uriParams[0] else null,                       &#10;    message: &quot;Initiating orders &quot; ++ attributes.method ++ &quot; request to database&quot;,&#10;}]" />
+		<db:insert doc:name="post-order-db" doc:id="6db0aa36-06e4-4ec9-86db-f28b64382fa1" config-ref="Database_Config-mysql" autoGenerateKeys="true" target="orderAdded" >
+			<db:sql ><![CDATA[INSERT INTO orders (user_id, product_name, brand, price, quantity, discount, order_date) 
+VALUES (:userId, :productName, :brand, :price, :quantity, :discount, :orderDate);
+
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+    userId: (payload.userId default 0) as Number,
+    productName: payload.productName default "",
+    brand: payload.brand default "",
+    price: (payload.price default 0) as Number,
+    quantity: (payload.quantity default 0) as Number,
+    discount: (payload.discount default 0) as Number,
+    orderDate: payload.now
+}]]]></db:input-parameters>
+			<db:auto-generated-keys-column-names >
+				<db:auto-generated-keys-column-name value="order_id" />
+			</db:auto-generated-keys-column-names>
+		</db:insert>
+		<ee:transform doc:name="Set-post-order-response" doc:id="8b38219e-b816-4d7b-8a89-cafc882bed30" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "message": "Order created successfully",
+  status: "success",
+  data: {
+    orderId: vars.orderAdded.generatedKeys."GENERATED_KEY" as Number default null,
+    userId: payload.userId,
+    productName: payload.productName,
+    brand: payload.brand,
+    price: payload.price,
+    quantity: payload.quantity,
+    discount: payload.discount,
+    orderDate: now()
+  }
+}
+
+]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+if (isEmpty(payload)) 404 else 200]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log-final-post-order" doc:id="d8b5a4af-67e0-412d-953b-af620062cd54" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    fecha: now() as String {format: &quot;dd-MM-yyyy HH:mm:ss a&quot;},&#10;    level: p('system.log.level') default &quot;INFO&quot;,&#10;    environment: p('mule.env') default &quot;local&quot;,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: httpMethod: vars.saveMethod,   &#10;    details:{&#10;	    message: &quot;Order successfully post into database.&quot;,&#10;	    affected_rows: payload.affectedRows default 1,&#10;	    data_updated:payload.data&#10;    }                          &#10;}]" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d1db69b9-a3fa-40fc-a4be-bb68dd1b9521" type="DB:CONNECTIVITY, DB:QUERY_EXECUTION, EXPRESSION&#10;" >
+				<logger level="INFO" doc:name="Log-error-post-order" doc:id="e2faf806-4e81-41da-8d55-020de3e1262f" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  "log_type": "SYSTEM_API_ERROR",&#10;  "API_NAME": app.name,&#10;  "correlation_id": vars.correlationId,&#10;  "flow_name": flow.name,&#10;  httpMethod: attributes.method,&#10;  "timestamp": now(),&#10;  "details": {&#10;    "target_id": attributes.uriParams.id default "UNKNOWN",&#10;    "error_type": (error.errorType.namespace default "DB") ++ ":" ++ (error.errorType.identifier default "UNKNOWN"),&#10;    "error_description": error.description default "No description available",&#10;    "message": "Failed to "++ attributes.method ++ " orders from database due to connection or execution error."&#10;  }&#10;}]' />
+				<ee:transform doc:name="set error message" doc:id="32a649fc-5050-49c2-8200-c32a24b1f1a1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "success": false,
+  "correlationId": vars.correlationId,
+  "error": {
+    "code": "INTERNAL_SERVER_ERROR",
+    "message": "Error processing the request in the database system.",
+    "description": error.description default "No technical details available",
+    "timestamp": now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"}
+  }
+}
+]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+500]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

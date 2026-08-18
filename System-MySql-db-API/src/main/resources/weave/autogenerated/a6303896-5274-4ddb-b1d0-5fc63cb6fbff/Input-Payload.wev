@@ -1,0 +1,13 @@
+%dw 2.0
+
+type auto_a6303896_5274_4ddb_b1d0_5fc63cb6fbff_Input_Payload = {
+  quantity: Number, 
+  price: Number, 
+  discount: Number, 
+  userId: Number, 
+  brand: String, 
+  orderDate: String, 
+  productName: String, 
+  _?: Any
+}
+

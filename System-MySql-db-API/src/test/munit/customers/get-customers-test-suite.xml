@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="get-customers-test-suite.xml" />
+	<munit:test name="get-customers-test-suite-get-customers-flowTest" doc:id="a048fa4b-8c75-4c82-8eb5-08ba81ce8482" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="7e5ca688-426b-4787-95c4-7c96a2c4e9d5" processor="db:select" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="get-customer-db" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[%dw 2.0&#10;output application/java&#10;---&#10;{&#10;  "user_id": 10,&#10;  "first_name": "Bayron prueba",&#10;  "last_name": "Leiva",&#10;  "gender": "Male",&#10;  "street": "calle 1514",&#10;  "city": "ciudad ",&#10;  "state": "state erger",&#10;  "creation_date": "2026-07-27",&#10;  "modification_date": "2026-07-27"&#10;}]' />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="40e7f33d-a4fb-42cb-a8d1-a46707e4b1dd">
+				<munit:attributes value='#[%dw 2.0&#10;output application/java&#10;---&#10;{&#10;    uriParams: {&#10;        "id": "10"&#10;    },&#10;    method: "GET",&#10;    requestPath: "/api/v1/customers/10"&#10;}]' />
+				<munit:variables >
+					<munit:variable key="saveMethod " value='"GET"' />
+					<munit:variable key="correlationId" value='"67bdbd80-8cea-11f1-a317-86e22729da3c"' />
+					<munit:variable key="outboundHeaders" value="{%dw 2.0 output application/java --- {}}" />
+				</munit:variables>
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to get-customers-flow" doc:id="d42c3eff-ee29-4ef6-9a00-a3f47ad134a3" name="get-customers-flow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="f13f3b8c-b0d5-4087-8d15-77b06636c4df" is="#[MunitTools::notNullValue()]" expression="#[payload]" />
+		</munit:validation>
+	</munit:test>
+
+</mule>

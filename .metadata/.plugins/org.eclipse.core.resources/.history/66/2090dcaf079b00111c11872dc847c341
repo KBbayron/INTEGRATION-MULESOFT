@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd">
+    <http:listener-config name="HTTP_Listener_this_api" doc:name="HTTP Listener config" doc:id="42582580-61a2-4d61-903f-6c556286d813">
+        <http:listener-connection host="${api.host}" port="${api.port}" />
+    </http:listener-config>
+    <http:request-config name="HTTP_Request_api-process" doc:name="HTTP Request configuration" doc:id="ba0f0e10-83f1-46f7-8bd9-a192e4f4a350" basePath="${api-process.basePath}">
+        <http:request-connection host="${api-process.host}" port="${api-process.port}" protocol="HTTPS">
+            <tls:context>
+                <tls:trust-store insecure="true" />
+            </tls:context>
+        </http:request-connection>
+    </http:request-config>
+    <configuration-properties doc:name="Configuration properties" doc:id="11284e35-e7a1-4155-8304-40842c5e3257" file="${env}.yaml" />
+    <apikit:config name="experience-api-config" api="resource::fe3915f0-c7dd-4adf-b381-407a7d55b1eb:experience-api-toystory:1.0.2:raml:zip:experience-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<global-property doc:name="Global Property" doc:id="f2d2bf9d-d552-4fc2-a21f-14e580cb382f" name="env" value="local" />
+</mule>

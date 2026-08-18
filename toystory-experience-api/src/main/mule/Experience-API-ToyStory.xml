@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <import doc:name="Import" doc:id="d8ef9a3b-c66b-402f-a926-4bb96679a520" file="global.xml" />
+    <flow name="experience-api-main">
+        <http:listener doc:name="Listener" doc:id="f8602f9a-807e-4d72-bf69-ddf30e8409e4" config-ref="HTTP_Listener_this_api" path="${api.basePath}/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <set-variable value="#[attributes.headers['X-Correlation-ID'] default correlationId]" doc:name="correlationId" doc:id="d85b1496-d99f-415d-bfe0-c694399f0cf0" variableName="correlationId" />
+        <set-variable value="${env}" doc:name="env" doc:id="70a43383-82f8-4d56-95f3-3f9eef341d9a" variableName="env"/>
+		<apikit:router config-ref="experience-api-config" />
+    </flow>
+    <flow name="experience-api-console">
+        <http:listener path="/console/*" config-ref="HTTP_Listener_this_api">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="experience-api-config" />
+    </flow>
+    <flow name="put:\customers\(customerId):application\json:experience-api-config">
+        <flow-ref doc:name="put-customer-flow-reference" doc:id="da1d2b7b-d98a-4f82-b98b-84885f5d8bbd" name="put-customer" />
+    </flow>
+    <flow name="delete:\customers\(customerId):experience-api-config">
+        <flow-ref doc:name="delete-customer-flow-reference" doc:id="abe4d71b-6cf4-4237-9104-6077169713fd" name="delete-customer" />
+    </flow>
+    <flow name="delete:\orders\(orderId):experience-api-config">
+        <flow-ref doc:name="delete-order-flow-reference" doc:id="8b535d6d-347d-4822-bfde-98f7f13d64af" name="delete-order" />
+    </flow>
+    <flow name="get:\customers:experience-api-config">
+        <flow-ref doc:name="get-customer-flow-reference" doc:id="f5c74df3-9920-4fc9-9dab-1b5764227ab6" name="get-customer" />
+    </flow>
+    <flow name="get:\orders:experience-api-config">
+        <flow-ref doc:name="get-order-flow-refernce" doc:id="b43cef92-e5f7-4254-b019-c3f734ba74d0" name="get-order" />
+    </flow>
+    <flow name="get:\customers\(customerId):experience-api-config">
+        <flow-ref doc:name="get-customer-flow-reference" doc:id="e3694ddb-b292-4726-ad95-39c35bd17484" name="get-customer" />
+    </flow>
+    <flow name="post:\customers:application\json:experience-api-config">
+        <flow-ref doc:name="post-customer-flow-reference" doc:id="92d4208c-b8fd-44b9-8234-0e95173d0ab2" name="post-customer" />
+    </flow>
+    <flow name="post:\orders:application\json:experience-api-config">
+        <flow-ref doc:name="put-orders-flow-reference" doc:id="122836ad-0b0d-4468-bd70-4f45280f07ad" name="put-orders" />
+    </flow>
+    <flow name="put:\orders\(orderId):application\json:experience-api-config">
+        <flow-ref doc:name="put-orders-reference" doc:id="9ce9650f-c4f1-4a4d-9c43-9149f6d3ee59" name="put-orders" />
+    </flow>
+    <flow name="get:\orders\(orderId):experience-api-config">
+        <flow-ref doc:name="get-order-flow-reference" doc:id="834a3c9f-ab76-47fb-8f51-9d226e1a826f" name="get-order" />
+    </flow>
+</mule>

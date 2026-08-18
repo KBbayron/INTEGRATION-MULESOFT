@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <import doc:name="Import" doc:id="fdd4020e-e825-42fe-880e-c6842cc33cee" file="global.xml" />
+    <flow name="system-api-main">
+        <http:listener config-ref="HTTP_Listener_this_api" path="${api.basePath}/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <set-variable value="#[attributes.headers.'x-correlation-id' default correlationId]" doc:name="correlationId" doc:id="c463703d-4827-4553-9dab-8366939e2030" variableName="correlationId" />
+        <set-variable value="#[attributes.method]" doc:name="saveMethod" doc:id="de68e6fb-2439-46c1-9573-9b42f4a29507" variableName="saveMethod" />
+        <set-variable value="${env}" doc:name="env" doc:id="a16b97cd-8cc1-4da3-8e50-73d8cec188dc" variableName="env"/>
+		<apikit:router config-ref="system-api-config" />
+    </flow>
+    <flow name="system-api-console">
+        <http:listener path="/console/*" config-ref="HTTP_Listener_this_api">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="system-api-config" />
+    </flow>
+    <flow name="put:\customers\(customerId):application\json:system-api-config">
+        <flow-ref doc:name="put-customer-flow-reference" doc:id="5a212337-4a39-42e3-909e-5cb1dbde36ab" name="put-customers-flow" />
+    </flow>
+    <flow name="put:\orders\(orderId):application\json:system-api-config">
+        <flow-ref doc:name="put-order-flow-reference" doc:id="df3270aa-134d-4865-874f-26bc551ba46b" name="put-orders-flow" />
+    </flow>
+    <flow name="delete:\customers\(customerId):system-api-config">
+        <flow-ref doc:name="delete-customer-flow-reference" doc:id="0c7b0976-43bb-4d8b-9b78-1da903c09a75" name="delete-customers-flow" />
+    </flow>
+    <flow name="delete:\orders\(orderId):system-api-config">
+        <flow-ref doc:name="delete-order-flow-reference" doc:id="fb30c1ea-c761-4cbf-b9d3-3c97b362cb62" name="delete-order-flow" />
+    </flow>
+    <flow name="get:\customers:system-api-config">
+        <flow-ref doc:name="get-all-customers-flow-reference" doc:id="14917039-55ef-4d0a-89ea-72fcab8e8e01" name="get-customers-flow" />
+    </flow>
+    <flow name="get:\orders:system-api-config">
+        <flow-ref doc:name="get-all customers-flow-reference" doc:id="2033f1ae-08be-4d40-b9cd-38fa6a5f474d" name="get-orders-flow" />
+    </flow>
+    <flow name="get:\customers\(customerId):system-api-config">
+        <flow-ref doc:name="get-customer-by-id-flow-reference" doc:id="ad98b9bd-d6d6-472e-90a7-6e0637114bf6" name="get-customers-flow" />
+    </flow>
+    <flow name="get:\orders\(orderId):system-api-config">
+        <flow-ref doc:name="get-order-by-id-flow-reference" doc:id="6f420354-028d-4962-9655-83cd19c9f187" name="get-orders-flow" />
+    </flow>
+    <flow name="post:\customers:application\json:system-api-config">
+        <flow-ref doc:name="post-customer-flow-reference" doc:id="aa844d4a-2c52-4332-abbd-dfc838623e2d" name="post-customers-flow" />
+    </flow>
+    <flow name="post:\orders:application\json:system-api-config">
+        <flow-ref doc:name="post-order-flow-reference" doc:id="a36b3eac-c1b0-466c-acab-627e6abdc078" name="post-orders-flow" />
+    </flow>
+</mule>

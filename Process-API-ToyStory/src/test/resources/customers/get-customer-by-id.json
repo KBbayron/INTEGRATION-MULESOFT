@@ -1,0 +1,195 @@
+{
+  "customer": {
+    "user_id": 11,
+    "first_name": "Bayron",
+    "last_name": "Leiva",
+    "gender": "Male",
+    "street": "Guadalupe",
+    "city": "Rome",
+    "state": "Italy",
+    "creation_date": "2026-07-27",
+    "modification_date": "2026-07-27"
+  },
+  "orders": [
+    {
+      "order_id": 12,
+      "user_id": 11,
+      "product_name": "NamePorduct",
+      "brand": "NameBrand",
+      "price": 98725,
+      "quantity": 46,
+      "discount": 5,
+      "order_date": "2026-07-28"
+    },
+    {
+      "order_id": 16,
+      "user_id": 11,
+      "product_name": "NamePorduct",
+      "brand": "NameBrand",
+      "price": 98725,
+      "quantity": 46,
+      "discount": 5,
+      "order_date": "2026-07-29"
+    },
+    {
+      "order_id": 27,
+      "user_id": 11,
+      "product_name": "Teclado Mecánico RGB",
+      "brand": "Logitech",
+      "price": 89.99,
+      "quantity": 1,
+      "discount": 10,
+      "order_date": "2026-07-14"
+    },
+    {
+      "order_id": 28,
+      "user_id": 11,
+      "product_name": "Teclado Mecánico RGB",
+      "brand": "Logitech",
+      "price": 89.99,
+      "quantity": 1,
+      "discount": 10,
+      "order_date": "2026-07-14"
+    },
+    {
+      "order_id": 32,
+      "user_id": 11,
+      "product_name": "NamePorduct",
+      "brand": "NameBrand",
+      "price": 98725,
+      "quantity": 46,
+      "discount": 5,
+      "order_date": "2026-08-04"
+    },
+    {
+      "order_id": 33,
+      "user_id": 11,
+      "product_name": "NamePorduct",
+      "brand": "NameBrand",
+      "price": 98725,
+      "quantity": 46,
+      "discount": 5,
+      "order_date": "2026-08-04"
+    },
+    {
+      "order_id": 39,
+      "user_id": 11,
+      "product_name": "",
+      "brand": "Brand-device",
+      "price": 20500,
+      "quantity": 5,
+      "discount": 5,
+      "order_date": null
+    },
+    {
+      "order_id": 40,
+      "user_id": 11,
+      "product_name": "",
+      "brand": "Brand-device",
+      "price": 20500,
+      "quantity": 5,
+      "discount": 5,
+      "order_date": null
+    },
+    {
+      "order_id": 41,
+      "user_id": 11,
+      "product_name": "Teclado Mecánico RGB",
+      "brand": "Logitech",
+      "price": 89.99,
+      "quantity": 1,
+      "discount": 10,
+      "order_date": "2026-07-14"
+    },
+    {
+      "order_id": 42,
+      "user_id": 11,
+      "product_name": "",
+      "brand": "Brand-device",
+      "price": 20500,
+      "quantity": 5,
+      "discount": 5,
+      "order_date": null
+    },
+    {
+      "order_id": 43,
+      "user_id": 11,
+      "product_name": "",
+      "brand": "Brand-device",
+      "price": 20500,
+      "quantity": 5,
+      "discount": 5,
+      "order_date": null
+    },
+    {
+      "order_id": 44,
+      "user_id": 11,
+      "product_name": "",
+      "brand": "Brand-device",
+      "price": 20500,
+      "quantity": 5,
+      "discount": 5,
+      "order_date": null
+    },
+    {
+      "order_id": 45,
+      "user_id": 11,
+      "product_name": "Teclado Mecánico RGB",
+      "brand": "Logitech",
+      "price": 89.99,
+      "quantity": 1,
+      "discount": 10,
+      "order_date": "2026-07-14"
+    },
+    {
+      "order_id": 47,
+      "user_id": 11,
+      "product_name": "Teclado Mecánico RGB",
+      "brand": "Logitech",
+      "price": 89.99,
+      "quantity": 1,
+      "discount": 10,
+      "order_date": null
+    },
+    {
+      "order_id": 48,
+      "user_id": 11,
+      "product_name": "Teclado Mecánico RGB",
+      "brand": "Logitech",
+      "price": 89.99,
+      "quantity": 1,
+      "discount": 10,
+      "order_date": null
+    },
+    {
+      "order_id": 53,
+      "user_id": 11,
+      "product_name": "",
+      "brand": "Brand-device",
+      "price": 20500,
+      "quantity": 5,
+      "discount": 5,
+      "order_date": "2026-08-11"
+    },
+    {
+      "order_id": 54,
+      "user_id": 11,
+      "product_name": "",
+      "brand": "Brand-device",
+      "price": 20500,
+      "quantity": 5,
+      "discount": 5,
+      "order_date": "2026-08-11"
+    },
+    {
+      "order_id": 55,
+      "user_id": 11,
+      "product_name": "",
+      "brand": "Brand-device",
+      "price": 20500,
+      "quantity": 5,
+      "discount": 5,
+      "order_date": "2026-08-11"
+    }
+  ]
+}

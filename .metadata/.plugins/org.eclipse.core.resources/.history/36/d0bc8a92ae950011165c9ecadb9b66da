@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="post-orders-test-suite.xml" />
+	<munit:test name="post-orders-test-suite-post-orders-flowTest" doc:id="2b14d5e9-8512-4836-b6cd-fa9ed190d131" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="96d9ead9-628a-4eb4-aa66-1ba637f3274b" processor="db:insert">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="post-order-db" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="orderAdded" value='#[{&#10;        "generatedKeys": {"GENERATED_KEY": 1}&#10;}]' mediaType="application/java" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="816f8351-3343-41f1-86d0-d852e71915d2" >
+				<munit:payload value="#[readUrl('classpath://orders/body-post-customer.json', 'application/json')]" />
+				<munit:attributes value='#[%dw 2.0&#10;output application/java&#10;---&#10;{&#10;    method: "POST",&#10;    requestPath: "/api/v1/orders"&#10;}]' />
+				<munit:variables >
+					<munit:variable key="correlationId" value='"uywdv-8273gf-2u3bf-ub23f-d2i3ud"' />
+					<munit:variable key="saveMethod" value='"POST"' />
+				</munit:variables>
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to post-orders-flow" doc:id="5adfe07b-5a66-4c9b-9931-b0a9e50eb675" name="post-orders-flow"/>
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-that doc:name="Assert that" doc:id="b75f0731-c04a-401c-8868-29f2447916b5" expression="#[payload]" is="#[MunitTools::equalTo(readUrl('classpath://post-order-response.json', 'application/json') update {&#10;	case .timestamp -&gt; payload.timestamp&#10;})]"/>
+		</munit:validation>
+	</munit:test>
+
+</mule>

@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_fba90133_2454_4a46_a70c_a292569be1db_Output_Variables_outboundHeaders = {|  |}
+

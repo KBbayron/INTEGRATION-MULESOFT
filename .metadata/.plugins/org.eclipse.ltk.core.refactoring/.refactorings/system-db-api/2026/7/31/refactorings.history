@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;system-db-api/src/main/mule/interfase-sys.xml&apos; to &apos;interface-sys.xml&apos;" description="Rename resource &apos;interfase-sys.xml&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/main/mule/interfase-sys.xml" name="interface-sys.xml" stamp="1785338748353" updateReferences="true"/>
+</session>

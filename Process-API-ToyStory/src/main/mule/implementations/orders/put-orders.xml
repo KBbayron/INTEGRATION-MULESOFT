@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="put-order" doc:id="0418e16c-769a-467b-90a0-81cee98a8d2d" >
+		<logger level="INFO" doc:name="initial-put-oder-logger" doc:id="c2d4605d-dadc-4522-ae79-2a4265fd36a6" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: Mule::p('mule.env') default &quot;local&quot;,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: attributes.method,                             &#10;    message: &quot;Initiating order put request to PAPI&quot;&#10;}]" />
+		<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  order_to_update: payload,&#10;  method: attributes.method,&#10;  id:attributes.uriParams.orderId&#10;}]" doc:name="saveData" doc:id="8e15d51f-01eb-464e-9c27-cdf48047ba8c" variableName="saveData" />
+		<http:request method="GET" doc:name="request-dynamic-get-order-sapi" doc:id="7bcd2338-74b0-436b-b812-a8373e896e59" config-ref="HTTP_Request_apy-sys" path="${api-sys.path.orders}" responseTimeout="30000000">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"X-Correlation-ID" : vars.correlationId
+}]]]></http:headers>
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"orderId" : vars.orderId
+}]]]></http:uri-params>
+			<http:response-validator>
+				<http:success-status-code-validator values="200..499" />
+			</http:response-validator>
+		</http:request>
+		<choice doc:name="verify-order-exist" doc:id="b0e946ea-e5f1-4388-b5d9-65d204a32b17" >
+			<when expression='payload.status == "Fail"' >
+				<ee:transform doc:name="set-not-order-exist-message" doc:id="9ad2f29f-a001-4b24-a99c-80d3c080230e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  Message: "There isn't orders to update data with id entered",
+  status: "Fail"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+404
+]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="final-logger-put-order-not-founded" doc:id="a4277c58-b081-4d0c-b4f1-66fdd56ff0cc" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    timestamp: now() as String {format: &quot;dd-MM-yyyy&quot;},&#10;    level:  Mule::p('system.log.level') default &quot;INFO&quot;,&#10;    environment: Mule::p('mule.env') default &quot;local&quot;,&#10;    apiName: app.name,&#10;    flow: flow.name,&#10;    correlationId: vars.correlationId,    &#10;    httpMethod: vars.saveData.method,   &#10;    details:{&#10;	    message: payload  	&#10;    }                          &#10;}]" />
+			</when>
+			<otherwise >
+				<ee:transform doc:name="set-body-to-request-sapi" doc:id="b1881e48-ee55-4522-a8ac-e75d2e4d3520" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "userId": vars.saveData.order_to_update.userId,
+  "productName": vars.saveData.order_to_update.productName,
+  "brand": vars.saveData.order_to_update.brand,
+  "price": vars.saveData.order_to_update.price,
+  "quantity": vars.saveData.order_to_update.quantity,
+  "discount": vars.saveData.order_to_update.discount,
+  "orderDate": now() as String {format: "yyyy-MM-dd"}
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<http:request method="PUT" doc:name="request-put-order-sapi" doc:id="5770dc15-eb6a-47bf-a56c-2053e1c6d557" config-ref="HTTP_Request_apy-sys" path="${api-sys.path.orders}/{orderId}" >
+					<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"orderId" : vars.saveData.id
+}]]]></http:uri-params>
+				</http:request>
+				<logger level="INFO" doc:name="final-logger-put-order" doc:id="7af32e01-c98c-4388-8639-57ebafb9cec8" message="#[%dw 2.0&#10;output application/json&#10;---&#10;payload]" />
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2610c201-87fc-4b17-b64c-a8c63542134b" >
+				<logger level="INFO" doc:name="set-error-logger" doc:id="30c6a2f0-0f93-446e-9ae1-da92f0ad6ca7" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  "log_type": "SYSTEM_API_ERROR",&#10;  "API_NAME": app.name,&#10;  "correlation_id": vars.correlationId,&#10;  "flow_name": flow.name,&#10;  httpMethod: attributes.method,&#10;  "timestamp": now(),&#10;  "details": {&#10;    "target_id": attributes.uriParams.id default "UNKNOWN",&#10;    "error_type": (error.errorType.namespace default "DB") ++ ":" ++ (error.errorType.identifier default "UNKNOWN"),&#10;    "error_description": error.description default "No description available",&#10;    "message": "Failed to "++ attributes.method ++ " order from PAPI."&#10;  }&#10;}]' />
+				<ee:transform doc:name="set-error-message" doc:id="695cb62f-ef8b-494a-8c85-7a7696beab57" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "success": false,
+  "correlationId": vars.correlationId,
+  "error": {
+    "code": if (error.errorType.identifier == "CONNECTIVITY") "SERVICE_UNAVAILABLE" else "INTERNAL_SERVER_ERROR",
+    "message": "Error processing the request on the target process.",
+    "description": error.description default "No technical details available",
+    "timestamp": now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"}
+  }
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+500]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>
