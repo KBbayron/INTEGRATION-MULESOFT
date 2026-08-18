@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename resource &apos;experience-api-1/src/main/resources/api/filter-data-process-api.raml&apos; to &apos;experience-api-toy-story.raml&apos;" description="Rename resource &apos;filter-data-process-api.raml&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/main/resources/api/filter-data-process-api.raml" name="experience-api-toy-story.raml" stamp="1785274916072" updateReferences="true"/>
-</session>
